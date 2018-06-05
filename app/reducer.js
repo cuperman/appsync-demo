@@ -1,4 +1,4 @@
-import { assign, concat, findIndex, merge, nth, slice } from 'lodash';
+import { concat, findIndex, merge, nth, slice } from 'lodash';
 
 import {
   FETCH_EVENTS_COMPLETE,

@@ -18,7 +18,7 @@ class Item extends React.Component {
     this.handleAddComment = this.handleAddComment.bind(this);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.props.fetchEvent();
     this.props.subscribeToComments();
   }
@@ -52,7 +52,7 @@ class Item extends React.Component {
     const { handleFieldChange, handleAddComment, formatDateTime } = this;
     const { event } = this.props;
     const { comment } = this.state;
-    const { id, name, where, when, description, comments } = event;
+    const { name, where, when, description, comments } = event;
 
     return (
       <div className="container">
@@ -92,7 +92,7 @@ class Item extends React.Component {
                     <div className="card-body">
                       <p className="card-text">{content}</p>
                       <p className="card-text float-right">
-                      <small className="text-muted">{formatDateTime(createdAt)}</small>
+                        <small className="text-muted">{formatDateTime(createdAt)}</small>
                       </p>
                     </div>
                   </div>

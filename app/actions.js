@@ -102,13 +102,11 @@ export function fetchEvent(id) {
 }
 
 export function subscribeToEventComments(eventId) {
-  console.debug('subscribe to comments for event', eventId);
   return dispatch => {
     API.graphql(
       graphqlOperation(SubscribeToEventComments, { eventId })
     ).subscribe({
       next: response => {
-        console.debug('comments', response);
         const data = response.value.data;
         // HACK: I'm not sure why all attributes are returned, but this filters out unwanted attributes
         const comment = pick(data.subscribeToEventComments, 'commentId', 'content', 'createdAt');

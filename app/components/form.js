@@ -81,7 +81,7 @@ Form.propTypes = {
   history: PropTypes.object.isRequired
 };
 
-function mapStateToProps(state) {
+function mapStateToProps() {
   return {};
 }
 
