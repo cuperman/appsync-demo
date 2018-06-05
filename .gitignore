@@ -1,0 +1,10 @@
+# ignore dependencies
+node_modules
+
+# ignore user config files
+.tm_properties
+
+# ignore artifacts
+/public/js/bundle.js
+stacks.json
+

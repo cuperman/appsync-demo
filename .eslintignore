@@ -1,0 +1,9 @@
+# Include hidden files
+!.*
+
+# Ignore installed dependencies
+node_modules/*
+
+# Ignore compiled assets
+/public/js/bundle.js
+
