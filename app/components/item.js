@@ -16,6 +16,7 @@ class Item extends React.Component {
 
     this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleAddComment = this.handleAddComment.bind(this);
+    this.handleEnterKey = this.handleEnterKey.bind(this);
   }
 
   componentDidMount() {
@@ -43,13 +44,20 @@ class Item extends React.Component {
     });
   }
 
+  handleEnterKey(event) {
+    const ENTER_KEYCODE = 13;
+    if (event.which === ENTER_KEYCODE) {
+      this.handleAddComment.call(this, event);
+    }
+  }
+
   formatDateTime(dateString) {
     const date = new Date(dateString);
     return date.toLocaleString();
   }
 
   render() {
-    const { handleFieldChange, handleAddComment, formatDateTime } = this;
+    const { handleFieldChange, handleAddComment, handleEnterKey, formatDateTime } = this;
     const { event } = this.props;
     const { comment } = this.state;
     const { name, where, when, description, comments } = event;
@@ -78,7 +86,7 @@ class Item extends React.Component {
           <form onSubmit={handleAddComment}>
             <div className="form-group">
               <label>Comments</label>
-              <textarea name="comment" className="form-control" onChange={handleFieldChange} value={comment}></textarea>
+              <textarea name="comment" className="form-control" onChange={handleFieldChange} onKeyPress={handleEnterKey} value={comment}></textarea>
             </div>
             <div className="form-group clearfix">
               <button className="btn btn-primary float-right">Add comment</button>
