@@ -1,4 +1,4 @@
-import { concat, findIndex, merge, nth, slice } from 'lodash';
+import { concat, findIndex, isArray, mergeWith, nth, slice, union } from 'lodash';
 
 import {
   FETCH_EVENTS_COMPLETE,
@@ -30,7 +30,11 @@ function findAndMerge(list, conditions, attributes) {
   const itemsBefore = slice(list, 0, index);
   const itemsAfter = slice(list, index + 1, list.length);
 
-  const newItem = merge({}, oldItem, attributes);
+  const newItem = mergeWith({}, oldItem, attributes, (objValue, srcValue) => {
+    if (isArray(objValue)) {
+      return union(objValue, srcValue);
+    }
+  });
 
   return concat(itemsBefore, newItem, itemsAfter);
 }

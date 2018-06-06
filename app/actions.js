@@ -145,10 +145,11 @@ export function commentOnEvent(eventId, content) {
   return dispatch => {
     API.graphql(graphqlOperation(CommentOnEvent, { eventId, content, createdAt }))
       .then(response => {
+        const data = response.data;
         dispatch({
           type: COMMENT_ON_EVENT_COMPLETE,
           eventId,
-          comment: response.data.commentOnEvent
+          comment: data.commentOnEvent
         });
       })
       .catch(error => {
