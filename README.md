@@ -1,10 +1,40 @@
-# appsync-demo
+# AppSync Demo
 
-## GraphQL Queries
+[AWS AppSync](https://aws.amazon.com/appsync/) allows you to define a GraphQL endpoint that maps to backend datastores, like [DynamoDB](https://aws.amazon.com/dynamodb/). This fits in nicely with modern client-side applications stacks. [AWS Amplify](https://aws.github.io/aws-amplify/) provides a JavaScript interface for common client-side tasks, like authentication and secure API requests.
 
-**Fetch all events**
+This demo app uses React for views, Redux for state management, GraphQL for communication to backend, and DynamoDB as a central datastore.
+
+<img src="https://cdn.worldvectorlogo.com/logos/react.svg"
+     alt="React"
+     width="150px" />&nbsp;<img
+     src="https://cdn.worldvectorlogo.com/logos/redux.svg"
+     alt="Redux"
+     width="130px" />&nbsp;&nbsp;&nbsp;<img
+     src="https://cdn.worldvectorlogo.com/logos/graphql.svg"
+     alt="GraphQL"
+     width="110px" />&nbsp;&nbsp;&nbsp;<img
+     src="https://cdn.worldvectorlogo.com/logos/aws-dynamodb.svg"
+     alt="DynamoDB"
+     width="105px" />
+
+## GraphQL API
+
+Create a GraphQL API using AWS AppSync.
+
+1. Browse to AppSync in your AWS console
+2. Click on "Create API"
+3. Choose a name for your API and select the option "Sample schema"
+4. Press "Create"
+
+*Note: This will deploy an API, provision DynamoDB tables, and create IAM roles on your behalf.*
+
+## GraphQL Operations
+
+### Queries
 
 ```graphql
+# Fetch all events
+#
 query EventConnection {
   listEvents {
     items {
@@ -16,11 +46,9 @@ query EventConnection {
     }
   }
 }
-```
 
-**Fetch single event**
-
-```graphql
+## Fetch single event
+#
 query Event($id: ID!) {
   getEvent(id: $id) {
     id
@@ -30,6 +58,7 @@ query Event($id: ID!) {
     description
     comments {
       items {
+        eventId
         commentId
         content
         createdAt
@@ -39,11 +68,11 @@ query Event($id: ID!) {
 }
 ```
 
-## GraphQL Mutations
-
-**Create new event**
+### Mutations
 
 ```graphql
+# Create new event
+#
 mutation Event($name: String!, $when: String!, $where: String!, $description: String!) {
   createEvent(name: $name, when: $when, where: $where, description: $description) {
     id
@@ -53,11 +82,9 @@ mutation Event($name: String!, $when: String!, $where: String!, $description: St
     description
   }
 }
-```
 
-**Comment on event**
-
-```graphql
+# Comment on event
+#
 mutation Comment($eventId: ID!, $content: String!, $createdAt: String!) {
   commentOnEvent(eventId: $eventId, content: $content, createdAt: $createdAt) {
     eventId
@@ -66,21 +93,23 @@ mutation Comment($eventId: ID!, $content: String!, $createdAt: String!) {
     createdAt
   }
 }
-```
 
-**deleteEvent**
-
-```graphql
+# deleteEvent
+#
 mutation Event($id: ID!) {
   deleteEvent(id: $id)
 }
 ```
 
-## GraphQL Subscriptions
+### Subscriptions
 
 ```graphql
+
+# Subscribe to comments on event
+#
 subscription Comment($eventId: String!) {
   subscribeToEventComments(eventId: $eventId) {
+    eventId
     commentId
     content
     createdAt

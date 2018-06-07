@@ -58,8 +58,8 @@ const SubscribeToEventComments = `subscription Comment($eventId: String!) {
   }
 }`;
 
-const CreateEvent = `mutation Event($name: String!, $when: String!, $where: String!, $description: String!) {
-  createEvent(name: $name, when: $when, where: $where, description: $description) {
+const CreateEvent = `mutation Event($name: String!, $where: String!, $when: String!, $description: String!) {
+  createEvent(name: $name, where: $where, when: $when, description: $description) {
     id
     name
     where
