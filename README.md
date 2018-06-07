@@ -94,8 +94,9 @@ List dependencies and why they are being used (refer to package.json)
 
 ## TODO
 
-* Integration with Cognito
-* Offline support
-* Server-side rendering
-* Deploy with CloudFormation
-
+[x] Use Amplify GraphQL Client with React/Redux
+[x] Use subscriptions to listen for data updates
+[ ] Offline support
+[ ] Server-side rendering
+[ ] Deploy with CloudFormation
+[ ] Integration with Cognito
