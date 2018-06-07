@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AppSync demo
+Outputs:
+  WebBucketId:
+    Value: !Ref WebBucket
+  WebBucketArn:
+    Value: !GetAtt WebBucket.Arn
+  WebBucketDomainName:
+    Value: !GetAtt WebBucket.DomainName
+  WebBucketDualStackDomainName:
+    Value: !GetAtt WebBucket.DualStackDomainName
+  WebBucketWebsiteUrl:
+    Value: !GetAtt WebBucket.WebsiteURL
+Resources:
+  WebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: appsync.jeffws.com
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        ErrorDocument: error.html
+        IndexDocument: index.html

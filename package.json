@@ -5,7 +5,12 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --mode production",
+    "deploy": "npm run stack:deploy && npm run stack:describe",
     "lint": "eslint .",
+    "s3:sync": "aws s3 sync ./public s3://appsync.jeffws.com/ --acl public-read",
+    "stack:deploy": "aws cloudformation deploy --template-file ./template.yaml --stack-name appsync --capabilities CAPABILITY_IAM",
+    "stack:describe": "aws cloudformation describe-stacks --stack-name appsync | tee ./stacks.json",
+    "stack:destroy": "aws cloudformation delete-stack --stack-name appsync",
     "start": "webpack-dev-server --progress --colors --content-base public/",
     "test": "npm run lint"
   },
