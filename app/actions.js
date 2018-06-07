@@ -40,6 +40,7 @@ const FetchEvent = `query Event($id: ID!) {
     description
     comments {
       items {
+        eventId
         commentId
         content
         createdAt
@@ -50,6 +51,7 @@ const FetchEvent = `query Event($id: ID!) {
 
 const SubscribeToEventComments = `subscription Comment($eventId: String!) {
   subscribeToEventComments(eventId: $eventId) {
+    eventId
     commentId
     content
     createdAt
@@ -68,6 +70,7 @@ const CreateEvent = `mutation Event($name: String!, $when: String!, $where: Stri
 
 const CommentOnEvent = `mutation Comment($eventId: ID!, $content: String!, $createdAt: String!) {
   commentOnEvent(eventId: $eventId, content: $content, createdAt: $createdAt) {
+    eventId
     commentId
     content
     createdAt
@@ -109,7 +112,7 @@ export function subscribeToEventComments(eventId) {
       next: response => {
         const data = response.value.data;
         // HACK: I'm not sure why all attributes are returned, but this filters out unwanted attributes
-        const comment = pick(data.subscribeToEventComments, 'commentId', 'content', 'createdAt');
+        const comment = pick(data.subscribeToEventComments, 'eventId', 'commentId', 'content', 'createdAt');
         dispatch({
           type: RECEIVED_EVENT_COMMENTS,
           eventId,

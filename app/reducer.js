@@ -5,8 +5,7 @@ import {
   FETCH_EVENT_COMPLETE,
   RECEIVED_EVENT_COMMENTS,
   CREATE_EVENT_FAILED,
-  CREATE_EVENT_COMPLETE,
-  COMMENT_ON_EVENT_COMPLETE
+  CREATE_EVENT_COMPLETE
 } from './actions';
 
 const initialState = {
@@ -49,11 +48,6 @@ export default function(state = initialState, action) {
     case FETCH_EVENT_COMPLETE:
       return {
         events: findAndReplace(state.events, { id: action.event.id }, action.event),
-        error: null
-      };
-    case COMMENT_ON_EVENT_COMPLETE:
-      return {
-        events: findAndMerge(state.events, { id: action.eventId }, { comments: [ action.comment ] }),
         error: null
       };
     case RECEIVED_EVENT_COMMENTS:
