@@ -73,8 +73,8 @@ query Event($id: ID!) {
 ```graphql
 # Create new event
 #
-mutation Event($name: String!, $when: String!, $where: String!, $description: String!) {
-  createEvent(name: $name, when: $when, where: $where, description: $description) {
+mutation Event($name: String!, $where: String!, $when: String!, $description: String!) {
+  createEvent(name: $name, where: $where, when: $when, description: $description) {
     id
     name
     where
@@ -117,6 +117,29 @@ subscription Comment($eventId: String!) {
 }
 ```
 
+## GraphQL Integration
+
+This is a good reference, and the examples are based on the sample schema:
+[https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
+
+In our app, all GraphQL operations are performed in the [actions](./app/actions.js). The actions are mapped to props and executed within the UI components. The actions perform the GraphQL operations asyncronously, and then dispatch the result, which is handled by the [reducer](./app/reducer.js). The reducer modifies the application state based on the response data, which triggers the components to re-render.
+
+## Running the app locally
+
+Edit [config.json](./config.json) and enter the credentials of your GraphQL API.
+
+Use npm to install the dependencies and kick off any build task.
+
+```bash
+npm install # install dependencies
+npm test    # run linter
+npm start   # run webpack-dev-server
+```
+
+Connect to your app at [localhost:8080](http://localhost:8080)
+
+## Security
+
 ## UI Dependencies
 
 List dependencies and why they are being used (refer to package.json)
@@ -125,7 +148,8 @@ List dependencies and why they are being used (refer to package.json)
 
 - [x] Use Amplify GraphQL Client with React/Redux
 - [x] Use subscriptions to listen for data updates
-- [ ] Server-side rendering
 - [ ] Integration with Cognito
+- [ ] Cognito User Pool Authorizations
+- [ ] Server-side rendering
 - [ ] Deploy with CloudFormation
 - [ ] Offline support

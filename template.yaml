@@ -1,22 +1,73 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: AppSync demo
-Outputs:
-  WebBucketId:
-    Value: !Ref WebBucket
-  WebBucketArn:
-    Value: !GetAtt WebBucket.Arn
-  WebBucketDomainName:
-    Value: !GetAtt WebBucket.DomainName
-  WebBucketDualStackDomainName:
-    Value: !GetAtt WebBucket.DualStackDomainName
-  WebBucketWebsiteUrl:
-    Value: !GetAtt WebBucket.WebsiteURL
+Description: AppSync Demo
+# Outputs:
 Resources:
-  WebBucket:
-    Type: AWS::S3::Bucket
+  EventsTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      BucketName: appsync.jeffws.com
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        ErrorDocument: error.html
-        IndexDocument: index.html
+      TableName: AppSyncDemo.Events
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  CommentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: AppSyncDemo.Comments
+      AttributeDefinitions:
+        - AttributeName: eventId
+          AttributeType: S
+        - AttributeName: commentId
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: eventId
+          KeyType: HASH
+        - AttributeName: commentId
+          KeyType: RANGE
+      LocalSecondaryIndexes:
+        - IndexName: comments-by-eventId-createdAt
+          KeySchema:
+            - AttributeName: eventId
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  DataAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+      Policies:
+        - PolicyName: AppSyncDemo.DataAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Join [ "", [ !GetAtt EventsTable.Arn, "*" ] ]
+                  - !Join [ "", [ !GetAtt CommentsTable.Arn, "*" ] ]
