@@ -1,26 +1,21 @@
-import Amplify, { API, graphqlOperation } from 'aws-amplify';
-import { assign, pick } from 'lodash';
-
-import { AppSyncConfig } from '../config.json';
-
-// Amplify Configuration
-
-Amplify.configure(AppSyncConfig);
+import { API, graphqlOperation } from 'aws-amplify';
 
 // Action Types
 
-export const FETCH_EVENTS_COMPLETE          = 'FETCH_EVENTS_COMPLETE';
-export const FETCH_EVENT_COMPLETE           = 'FETCH_EVENT_COMPLETE';
-export const RECEIVED_EVENT_COMMENTS        = 'RECEIVED_EVENT_COMMENTS';
-export const CREATE_EVENT_FAILED            = 'CREATE_EVENT_FAILED';
-export const CREATE_EVENT_COMPLETE          = 'CREATE_EVENT_COMPLETE';
-export const COMMENT_ON_EVENT_FAILED        = 'COMMENT_ON_EVENT_FAILED';
-export const COMMENT_ON_EVENT_COMPLETE      = 'COMMENT_ON_EVENT_COMPLETE';
+export const FETCH_EVENTS_COMPLETE              = 'FETCH_EVENTS_COMPLETE';
+export const FETCH_MORE_EVENTS_COMPLETE         = 'FETCH_MORE_EVENTS_COMPLETE';
+export const FETCH_EVENT_COMMENTS_COMPLETE      = 'FETCH_EVENT_COMMENTS_COMPLETE';
+export const FETCH_MORE_EVENT_COMMENTS_COMPLETE = 'FETCH_MORE_EVENT_COMMENTS_COMPLETE';
+export const RECEIVED_EVENT_COMMENT             = 'RECEIVED_EVENT_COMMENT';
+export const CREATE_EVENT_FAILED                = 'CREATE_EVENT_FAILED';
+export const CREATE_EVENT_COMPLETE              = 'CREATE_EVENT_COMPLETE';
+export const COMMENT_ON_EVENT_FAILED            = 'COMMENT_ON_EVENT_FAILED';
+export const COMMENT_ON_EVENT_COMPLETE          = 'COMMENT_ON_EVENT_COMPLETE';
 
 // GraphQL Queries
 
-const FetchEvents = `query EventConnection {
-  listEvents {
+const FetchEvents = `query EventConnection($nextToken: String) {
+  listEvents(nextToken: $nextToken) {
     items {
       id
       name
@@ -28,23 +23,21 @@ const FetchEvents = `query EventConnection {
       when
       description
     }
+    nextToken
   }
 }`;
 
-const FetchEvent = `query Event($id: ID!) {
+const FetchEventComments = `query Event($id: ID!, $nextToken: String) {
   getEvent(id: $id) {
     id
-    name
-    where
-    when
-    description
-    comments {
+    comments(limit: 10, nextToken: $nextToken) {
       items {
         eventId
         commentId
         content
         createdAt
       }
+      nextToken
     }
   }
 }`;
@@ -79,51 +72,65 @@ const CommentOnEvent = `mutation Comment($eventId: ID!, $content: String!, $crea
 
 // Exported Actions
 
-export function fetchEvents() {
+export function fetchEvents(nextToken) {
   return dispatch => {
-    API.graphql(graphqlOperation(FetchEvents))
+    API.graphql(graphqlOperation(FetchEvents, { nextToken }))
       .then(response => {
+        const data = response.data;
+
         dispatch({
-          type: FETCH_EVENTS_COMPLETE,
-          events: response.data.listEvents.items
+          type: nextToken ? FETCH_MORE_EVENTS_COMPLETE : FETCH_EVENTS_COMPLETE,
+          events: data.listEvents.items,
+          nextToken: data.listEvents.nextToken
         });
       });
   };
 }
 
-export function fetchEvent(id) {
+export function fetchEventComments(eventId, nextToken) {
   return dispatch => {
-    API.graphql(graphqlOperation(FetchEvent, { id }))
+    API.graphql(graphqlOperation(FetchEventComments, { id: eventId, nextToken }))
       .then(response => {
         const data = response.data;
         dispatch({
-          type: FETCH_EVENT_COMPLETE,
-          event: assign({}, data.getEvent, { comments: data.getEvent.comments.items })
+          type: nextToken ? FETCH_MORE_EVENT_COMMENTS_COMPLETE : FETCH_EVENT_COMMENTS_COMPLETE,
+          eventId: data.getEvent.id,
+          comments: data.getEvent.comments.items,
+          nextToken: data.getEvent.comments.nextToken
         });
       });
   };
 }
 
+const eventCommentSubscriptions = {};
+
 export function subscribeToEventComments(eventId) {
   return dispatch => {
-    API.graphql(
+    const subscription = API.graphql(
       graphqlOperation(SubscribeToEventComments, { eventId })
     ).subscribe({
       next: response => {
         const data = response.value.data;
-        // HACK: I'm not sure why all attributes are returned, but this filters out unwanted attributes
-        const comment = pick(data.subscribeToEventComments, 'eventId', 'commentId', 'content', 'createdAt');
         dispatch({
-          type: RECEIVED_EVENT_COMMENTS,
+          type: RECEIVED_EVENT_COMMENT,
           eventId,
-          comment
+          comment: data.subscribeToEventComments
         });
       }
     });
+
+    eventCommentSubscriptions[eventId] = eventCommentSubscriptions[eventId] || [];
+    eventCommentSubscriptions[eventId].push(subscription);
   };
 }
 
-// TODO: how to unsubscribe??
+export function unsubscribeFromEventComments(eventId) {
+  if (eventCommentSubscriptions[eventId]) {
+    eventCommentSubscriptions[eventId].forEach(subscription => {
+      subscription.unsubscribe();
+    });
+  }
+}
 
 export function createEvent(name, where, when, description) {
   return dispatch => {
@@ -133,6 +140,8 @@ export function createEvent(name, where, when, description) {
           type: CREATE_EVENT_COMPLETE,
           event: response.data.createEvent
         });
+
+        fetchEvents()(dispatch);
       })
       .catch(error => {
         dispatch({

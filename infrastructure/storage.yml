@@ -1,11 +1,17 @@
-AWSTemplateFormatVersion: "2010-09-09"
-Description: AppSync Demo
-# Outputs:
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppSync Demo Storage
+Outputs:
+  DataAccessPolicyArn:
+    Value: !Ref DataAccessPolicy
+  EventsTableName:
+    Value: !Ref EventsTable
+  CommentsTableName:
+    Value: !Ref CommentsTable
 Resources:
   EventsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: AppSyncDemo.Events
+      TableName: !Sub ${AWS::StackName}-Events
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
@@ -18,7 +24,7 @@ Resources:
   CommentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: AppSyncDemo.Comments
+      TableName: !Sub ${AWS::StackName}-Comments
       AttributeDefinitions:
         - AttributeName: eventId
           AttributeType: S
@@ -43,31 +49,21 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
-  DataAccessRole:
-    Type: AWS::IAM::Role
+  DataAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+      Description: Read/write access to AppSync Demo tables
+      PolicyDocument:
+        Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
-              - sts:AssumeRole
-            Principal:
-              Service:
-                - appsync.amazonaws.com
-      Policies:
-        - PolicyName: AppSyncDemo.DataAccessPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - dynamodb:GetItem
-                  - dynamodb:PutItem
-                  - dynamodb:DeleteItem
-                  - dynamodb:UpdateItem
-                  - dynamodb:Query
-                  - dynamodb:Scan
-                Resource:
-                  - !Join [ "", [ !GetAtt EventsTable.Arn, "*" ] ]
-                  - !Join [ "", [ !GetAtt CommentsTable.Arn, "*" ] ]
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+              - dynamodb:DeleteItem
+              - dynamodb:UpdateItem
+              - dynamodb:Query
+              - dynamodb:Scan
+            Resource:
+              - !Join [ '', [ !GetAtt EventsTable.Arn, '*' ] ]
+              - !Join [ '', [ !GetAtt CommentsTable.Arn, '*' ] ]

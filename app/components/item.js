@@ -2,9 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { find, orderBy } from 'lodash';
+import { find } from 'lodash';
 
-import { fetchEvent, subscribeToEventComments, commentOnEvent } from '../actions';
+import { fetchEventComments, subscribeToEventComments, unsubscribeFromEventComments, commentOnEvent } from '../actions';
+import Comment from './comment';
 
 class Item extends React.Component {
   constructor(props) {
@@ -17,11 +18,16 @@ class Item extends React.Component {
     this.handleFieldChange = this.handleFieldChange.bind(this);
     this.handleAddComment = this.handleAddComment.bind(this);
     this.handleEnterKey = this.handleEnterKey.bind(this);
+    this.handleMoreComments = this.handleMoreComments.bind(this);
   }
 
   componentDidMount() {
-    this.props.fetchEvent();
+    this.props.fetchEventComments();
     this.props.subscribeToComments();
+  }
+
+  componentWillUnmount() {
+    this.props.unsubscribeFromComments();
   }
 
   handleFieldChange(event) {
@@ -51,16 +57,16 @@ class Item extends React.Component {
     }
   }
 
-  formatDateTime(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleString();
+  handleMoreComments(event) {
+    event.preventDefault();
+    this.props.fetchEventComments(this.props.nextToken);
   }
 
   render() {
-    const { handleFieldChange, handleAddComment, handleEnterKey, formatDateTime } = this;
-    const { event } = this.props;
+    const { handleFieldChange, handleAddComment, handleMoreComments, handleEnterKey } = this;
+    const { event, comments, nextToken } = this.props;
     const { comment } = this.state;
-    const { name, where, when, description, comments } = event;
+    const { name, where, when, description } = event;
 
     return (
       <div className="container">
@@ -91,23 +97,13 @@ class Item extends React.Component {
             <div className="form-group clearfix">
               <button className="btn btn-primary float-right">Add comment</button>
             </div>
-            <div className="form-group">
-              {comments && orderBy(comments, ['createdAt'], ['desc']).map(comment => {
-                const { commentId, content, createdAt } = comment;
-
-                return (
-                  <div key={commentId} className="card mb-2">
-                    <div className="card-body">
-                      <p className="card-text">{content}</p>
-                      <p className="card-text float-right">
-                        <small className="text-muted">{formatDateTime(createdAt)}</small>
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </form>
+          <div>
+            {comments && comments.map(comment => <Comment key={comment.commentId} {...comment} />)}
+          </div>
+          <div className="d-flex justify-content-center mb-2">
+            {nextToken && <button className="btn btn-link" onClick={handleMoreComments}>More</button>}
+          </div>
         </main>
       </div>
     );
@@ -117,21 +113,31 @@ class Item extends React.Component {
 Item.propTypes = {
   match: PropTypes.object.isRequired,
   event: PropTypes.object.isRequired,
-  fetchEvent: PropTypes.func.isRequired,
+  comments: PropTypes.array.isRequired,
+  fetchEventComments: PropTypes.func.isRequired,
   subscribeToComments: PropTypes.func.isRequired,
-  addComment: PropTypes.func.isRequired
+  unsubscribeFromComments: PropTypes.func.isRequired,
+  addComment: PropTypes.func.isRequired,
+  nextToken: PropTypes.string
 };
 
 Item.defaultProps = {
-  event: {}
+  event: {},
+  comments: []
 };
 
 function mapStateToProps(state, nextProps) {
   const { match } = nextProps;
   const id = match.params.id;
+  const events = state.events && state.events.items || [];
+  const event = find(events, { id });
+  const comments = state.comments[id] && state.comments[id].items || [];
+  const nextToken = state.comments[id] && state.comments[id].nextToken;
 
   return {
-    event: find(state.events, { id })
+    event,
+    comments,
+    nextToken
   };
 }
 
@@ -140,8 +146,9 @@ function mapDispatchToProps(dispatch, nextProps) {
   const eventId = match.params.id;
 
   return {
-    fetchEvent: () => dispatch(fetchEvent(eventId)),
+    fetchEventComments: (nextToken) => dispatch(fetchEventComments(eventId, nextToken)),
     subscribeToComments: () => dispatch(subscribeToEventComments(eventId)),
+    unsubscribeFromComments: () => unsubscribeFromEventComments(eventId),
     addComment: (content) => dispatch(commentOnEvent(eventId, content))
   };
 }

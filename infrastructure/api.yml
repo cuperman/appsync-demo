@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppSync Demo API
+Parameters:
+  DataAccessPolicyArn:
+    Type: String
+  EventsTableName:
+    Type: String
+  CommentsTableName:
+    Type: String
+Outputs:
+  GraphqlApiUrl:
+    Value: !GetAtt GraphqlApi.GraphQLUrl
+  GraphqlApiKey:
+    Value: !GetAtt GraphqlApiKey.ApiKey
+Resources:
+  GraphqlApi:
+    Type: AWS::AppSync::GraphQLApi
+    Properties:
+      Name: !Sub ${AWS::StackName}-GraphQL
+      AuthenticationType: API_KEY
+  GraphqlApiKey:
+    Type: AWS::AppSync::ApiKey
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      Expires: 1560816000
+  EventsDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      Name: !Join [ '_', !Split [ '-', !Sub '${AWS::StackName}_Events' ] ]
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt DataAccessRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref EventsTableName
+        AwsRegion: !Sub ${AWS::Region}
+  CommentsDataSource:
+    Type: AWS::AppSync::DataSource
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      Name: !Join [ '_', !Split [ '-', !Sub '${AWS::StackName}_Comments' ] ]
+      Type: AMAZON_DYNAMODB
+      ServiceRoleArn: !GetAtt DataAccessRole.Arn
+      DynamoDBConfig:
+        TableName: !Ref CommentsTableName
+        AwsRegion: !Sub ${AWS::Region}
+  DataAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      ManagedPolicyArns:
+        - !Ref DataAccessPolicyArn
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - appsync.amazonaws.com
+  GraphqlSchema:
+    Type: AWS::AppSync::GraphQLSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      Definition: |
+        type Comment {
+          eventId: ID!
+          commentId: String!
+          content: String!
+          createdAt: String!
+        }
+
+        type CommentConnection {
+          items: [Comment]
+          nextToken: String
+        }
+
+        type Event {
+          id: ID!
+          name: String
+          where: String
+          when: String
+          description: String
+          comments(limit: Int, nextToken: String): CommentConnection
+        }
+
+        type EventConnection {
+          items: [Event]
+          nextToken: String
+        }
+
+        type Mutation {
+          createEvent(
+            name: String!,
+            when: String!,
+            where: String!,
+            description: String!
+          ): Event
+          deleteEvent(id: ID!): Event
+          commentOnEvent(eventId: ID!, content: String!, createdAt: String!): Comment
+        }
+
+        type Query {
+          getEvent(id: ID!): Event
+          listEvents(limit: Int, nextToken: String): EventConnection
+        }
+
+        type Subscription {
+          subscribeToEventComments(eventId: String!): Comment
+            @aws_subscribe(mutations: ["commentOnEvent"])
+        }
+
+        schema {
+          query: Query
+          mutation: Mutation
+          subscription: Subscription
+        }
+  EventCommentsResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Event
+      FieldName: comments
+      DataSourceName: !GetAtt CommentsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Query",
+          "index": "comments-by-eventId-createdAt",
+          "scanIndexForward" : false,
+          "query": {
+            "expression": "eventId = :eventId",
+            "expressionValues": {
+              ":eventId": {
+                "S": "$context.source.id"
+              }
+            }
+          },
+          "limit": #if($context.arguments.limit) $context.arguments.limit #else 10 #end,
+          "nextToken": #if($context.arguments.nextToken) "$context.arguments.nextToken" #else null #end
+        }
+      ResponseMappingTemplate: |
+        {
+          "items": $util.toJson($context.result.items),
+          "nextToken": $util.toJson($context.result.nextToken)
+        }
+  MutationCreateEventResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Mutation
+      FieldName: createEvent
+      DataSourceName: !GetAtt EventsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key": {
+            "id": { "S": "$util.autoId()"}
+          },
+          "attributeValues": {
+            "name": { "S": "$context.arguments.name" },
+            "where": { "S": "$context.arguments.where" },
+            "when": { "S": "$context.arguments.when" },
+            "description": { "S": "$context.arguments.description" }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  MutationDeleteEventResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Mutation
+      FieldName: deleteEvent
+      DataSourceName: !GetAtt EventsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "DeleteItem",
+          "key": {
+            "id": { "S": "$context.arguments.id"}
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  MutationCommentOnEventResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Mutation
+      FieldName: commentOnEvent
+      DataSourceName: !GetAtt CommentsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "PutItem",
+          "key": {
+            "eventId": { "S": "$context.arguments.eventId" },
+            "commentId": { "S": "$util.autoId()" }
+          },
+          "attributeValues": {
+            "content": { "S": "$context.arguments.content" },
+            "createdAt": { "S": "$context.arguments.createdAt" }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  QueryGetEventResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Query
+      FieldName: getEvent
+      DataSourceName: !GetAtt EventsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "GetItem",
+          "key": {
+            "id": { "S": "$context.arguments.id" }
+          }
+        }
+      ResponseMappingTemplate: |
+        $util.toJson($context.result)
+  QueryListEventsResolver:
+    Type: AWS::AppSync::Resolver
+    DependsOn: GraphqlSchema
+    Properties:
+      ApiId: !GetAtt GraphqlApi.ApiId
+      TypeName: Query
+      FieldName: listEvents
+      DataSourceName: !GetAtt EventsDataSource.Name
+      RequestMappingTemplate: |
+        {
+          "version": "2017-02-28",
+          "operation": "Scan",
+          "limit": #if($context.arguments.limit) $context.arguments.limit #else 10 #end,
+          "nextToken": #if($context.arguments.nextToken) "$context.arguments.nextToken" #else null #end
+        }
+      ResponseMappingTemplate: |
+        {
+          "items": $util.toJson($context.result.items),
+          "nextToken": $util.toJson($context.result.nextToken)
+        }

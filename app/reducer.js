@@ -1,70 +1,88 @@
-import { concat, findIndex, isArray, mergeWith, nth, slice, union } from 'lodash';
+import { assign, concat, find } from 'lodash';
 
 import {
   FETCH_EVENTS_COMPLETE,
-  FETCH_EVENT_COMPLETE,
-  RECEIVED_EVENT_COMMENTS,
-  CREATE_EVENT_FAILED,
-  CREATE_EVENT_COMPLETE
+  FETCH_MORE_EVENTS_COMPLETE,
+  FETCH_EVENT_COMMENTS_COMPLETE,
+  FETCH_MORE_EVENT_COMMENTS_COMPLETE,
+  RECEIVED_EVENT_COMMENT,
+  CREATE_EVENT_COMPLETE,
+  CREATE_EVENT_FAILED
 } from './actions';
 
 const initialState = {
-  events: [],
+  events: {
+    // items: [],
+    // nextToken: null
+  },
+  comments: {
+    // 'EVENT_ID': {
+    //   items: [],
+    //   nextToken: null
+    // }
+  },
   error: null
 };
-
-function findAndReplace(list, conditions, object) {
-  const index = findIndex(list, conditions);
-
-  const itemsBefore = slice(list, 0, index);
-  const itemsAfter = slice(list, index + 1, list.length);
-
-  return concat(itemsBefore, object, itemsAfter);
-}
-
-function findAndMerge(list, conditions, attributes) {
-  const index = findIndex(list, conditions);
-  const oldItem = nth(list, index);
-
-  const itemsBefore = slice(list, 0, index);
-  const itemsAfter = slice(list, index + 1, list.length);
-
-  const newItem = mergeWith({}, oldItem, attributes, (objValue, srcValue) => {
-    if (isArray(objValue)) {
-      return union(objValue, srcValue);
-    }
-  });
-
-  return concat(itemsBefore, newItem, itemsAfter);
-}
 
 export default function(state = initialState, action) {
   switch (action.type) {
     case FETCH_EVENTS_COMPLETE:
-      return {
-        events: action.events,
+      return assign({}, state, {
+        events: {
+          items: action.events,
+          nextToken: action.nextToken
+        },
         error: null
-      };
-    case FETCH_EVENT_COMPLETE:
-      return {
-        events: findAndReplace(state.events, { id: action.event.id }, action.event),
+      });
+    case FETCH_MORE_EVENTS_COMPLETE:
+      return assign({}, state, {
+        events: {
+          items: concat(state.events.items, action.events),
+          nextToken: action.nextToken
+        },
         error: null
-      };
-    case RECEIVED_EVENT_COMMENTS:
-      return {
-        events: findAndMerge(state.events, { id: action.eventId }, { comments: [ action.comment ] }),
+      });
+    case FETCH_EVENT_COMMENTS_COMPLETE:
+      return assign({}, state, {
+        comments: assign({}, state.comments, {
+          [action.eventId]: {
+            items: action.comments,
+            nextToken: action.nextToken
+          }
+        }),
         error: null
-      };
-    case CREATE_EVENT_FAILED:
-      return {
-        events: state.events,
-        error: action.error
-      };
+      });
+    case FETCH_MORE_EVENT_COMMENTS_COMPLETE:
+      return assign({}, state, {
+        comments: assign({}, state.comments, {
+          [action.eventId]: {
+            items: concat(state.comments[action.eventId].items, action.comments),
+            nextToken: action.nextToken
+          }
+        }),
+        error: null
+      });
+    case RECEIVED_EVENT_COMMENT:
+      if (find(state.comments[action.eventId].items, { commentId: action.comment.commentId })) {
+        // duplicate detected; ignore
+        return;
+      }
+      return assign({}, state, {
+        comments: assign({}, state.comments, {
+          [action.eventId]: {
+            items: concat([action.comment], state.comments[action.eventId].items),
+            nextToken: state.comments.nextToken
+          }
+        })
+      });
     case CREATE_EVENT_COMPLETE:
-      return {
-        events: concat(state.events, action.event),
+      return assign({}, state, {
         error: null
-      };
+      });
+    case CREATE_EVENT_FAILED:
+      return assign({}, state, {
+        error: action.error
+      });
     default:
       return state;
   }

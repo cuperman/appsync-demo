@@ -1,7 +1,5 @@
 # AppSync Demo
-
 [AWS AppSync](https://aws.amazon.com/appsync/) allows you to define a GraphQL endpoint that maps to backend datastores, like [DynamoDB](https://aws.amazon.com/dynamodb/). This fits in nicely with modern client-side applications stacks. [AWS Amplify](https://aws.github.io/aws-amplify/) provides a JavaScript interface for common client-side tasks, like authentication and secure API requests.
-
 This demo app uses React for views, Redux for state management, GraphQL for communication to backend, and DynamoDB as a central datastore.
 
 <img src="https://cdn.worldvectorlogo.com/logos/react.svg"
@@ -17,7 +15,7 @@ This demo app uses React for views, Redux for state management, GraphQL for comm
      alt="DynamoDB"
      width="105px" />
 
-## GraphQL API
+## GraphQL API with AppSync
 
 Create a GraphQL API using AWS AppSync.
 
@@ -28,9 +26,9 @@ Create a GraphQL API using AWS AppSync.
 
 *Note: This will deploy an API, provision DynamoDB tables, and create IAM roles on your behalf.*
 
-## GraphQL Operations
+### GraphQL Operations
 
-### Queries
+#### Queries
 
 ```graphql
 # Fetch all events
@@ -47,7 +45,7 @@ query EventConnection {
   }
 }
 
-## Fetch single event
+# Fetch single event
 #
 query Event($id: ID!) {
   getEvent(id: $id) {
@@ -68,7 +66,7 @@ query Event($id: ID!) {
 }
 ```
 
-### Mutations
+#### Mutations
 
 ```graphql
 # Create new event
@@ -101,7 +99,7 @@ mutation Event($id: ID!) {
 }
 ```
 
-### Subscriptions
+#### Subscriptions
 
 ```graphql
 
@@ -117,14 +115,26 @@ subscription Comment($eventId: String!) {
 }
 ```
 
-## GraphQL Integration
+## Schema Changes
+
+I made one update to the sample schema to support my example application.
+
+Add `scanIndexForward: false` to the resolver for event comments to retrieve comments in reverse order.
+
+### GraphQL Integration
 
 This is a good reference, and the examples are based on the sample schema:
 [https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
 
 In our app, all GraphQL operations are performed in the [actions](./app/actions.js). The actions are mapped to props and executed within the UI components. The actions perform the GraphQL operations asyncronously, and then dispatch the result, which is handled by the [reducer](./app/reducer.js). The reducer modifies the application state based on the response data, which triggers the components to re-render.
 
-## Running the app locally
+## UI with Amplify
+
+### UI Dependencies
+
+List dependencies and why they are being used (refer to package.json)
+
+### Running the app locally
 
 Edit [config.json](./config.json) and enter the credentials of your GraphQL API.
 
@@ -138,18 +148,46 @@ npm start   # run webpack-dev-server
 
 Connect to your app at [localhost:8080](http://localhost:8080)
 
-## Security
+## Provision with CloudFormation
 
-## UI Dependencies
+Use aws-cli to deploy the infrastructure via CloudFormation:
 
-List dependencies and why they are being used (refer to package.json)
+```bash
+aws cloudformation deploy \
+    --template-file ./infrastructure/ui.yml \
+    --stack-name appsync-demo-ui \
+    --parameter-overrides DomainName=appsyncdemo.mydomain.com ValidationDomainName=mydomain.com
+
+aws cloudformation deploy \
+    --template-file ./infrastructure/storage.yml \
+    --stack-name appsync-demo-storage \
+    --capabilities CAPABILITY_IAM
+
+aws cloudformation deploy \
+    --template-file ./infrastructure/api.yml \
+    --stack-name appsync-demo-api \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides DataAccessPolicyArn=POLICY_ARN EventsTableName=TABLE_NAME CommentsTableName=TABLE_NAME
+```
+
+Update config.json, then build & deploy the site:
+
+```bash
+npm run build
+aws s3 sync ./public s3://appsync-demo-ui-sitebucket-ID/ --acl public-read
+```
+
+## Resources
+
+* [Introducing the AWS Amplify GraphQL Client](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
+* [Deploy an AWS AppSync GraphQL API with CloudFormation](https://read.acloud.guru/deploy-an-aws-appsync-graphql-api-with-amazon-cloudformation-9a783fdd8491)
 
 ## TODO
 
 - [x] Use Amplify GraphQL Client with React/Redux
 - [x] Use subscriptions to listen for data updates
-- [ ] Integration with Cognito
+- [x] Integration with Cognito
+- [x] Deploy with CloudFormation
 - [ ] Cognito User Pool Authorizations
-- [ ] Server-side rendering
-- [ ] Deploy with CloudFormation
 - [ ] Offline support
+- [ ] Server-side rendering
