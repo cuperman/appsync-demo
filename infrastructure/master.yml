@@ -1,15 +1,12 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: AppSync Demo Master Stack
-Parameters:
-  DomainName:
-    Type: String
 Outputs:
   UiStackId:
     Value: !Ref UiStack
   UiBucketName:
     Value: !GetAtt UiStack.Outputs.SiteBucketId
   UiUrl:
-    Value: !GetAtt UiStack.Outputs.SiteCloudFrontDomain
+    Value: !GetAtt UiStack.Outputs.SiteBucketWebsiteUrl
   StorageStackId:
     Value: !Ref StorageStack
   ApiStackId:
@@ -20,8 +17,6 @@ Resources:
   UiStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      Parameters:
-        DomainName: !Ref DomainName
       TemplateURL: ./ui.yml
   StorageStack:
     Type: AWS::CloudFormation::Stack

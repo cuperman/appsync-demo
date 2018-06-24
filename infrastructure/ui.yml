@@ -1,67 +1,14 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: AppSync Demo UI
-Parameters:
-  DomainName:
-    Type: String
 Outputs:
-  CertificateId:
-    Value: !Ref Certificate
   SiteBucketId:
     Value: !Ref SiteBucket
-  SiteBucketArn:
-    Value: !GetAtt SiteBucket.Arn
-  SiteBucketDomainName:
-    Value: !GetAtt SiteBucket.DomainName
-  SiteBucketDualStackDomainName:
-    Value: !GetAtt SiteBucket.DualStackDomainName
   SiteBucketWebsiteUrl:
     Value: !GetAtt SiteBucket.WebsiteURL
-  SiteCloudFrontId:
-    Value: !Ref SiteCloudFront
-  SiteCloudFrontDomain:
-    Value: !GetAtt SiteCloudFront.DomainName
 Resources:
-  Certificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !Ref DomainName
-      DomainValidationOptions:
-        - DomainName: !Ref DomainName
-          ValidationDomain: !Ref DomainName
-        # Assumption that DomainName includes a subdomain
-        # Stripping primary domain from the list and adding to validations
-        - DomainName: !Ref DomainName
-          ValidationDomain: !Join
-            - '.'
-            - - !Select [ 1, !Split ['.', !Ref DomainName ] ]
-              - !Select [ 2, !Split ['.', !Ref DomainName ] ]
-      SubjectAlternativeNames:
-        - !Ref DomainName
   SiteBucket:
     Type: AWS::S3::Bucket
     Properties:
       AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
-  SiteCloudFront:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Aliases:
-          - !Ref DomainName
-        Enabled: true
-        Origins:
-          - DomainName: !Select [ 1, !Split [ '//', !GetAtt SiteBucket.WebsiteURL ] ]
-            Id: origin
-            CustomOriginConfig:
-              OriginProtocolPolicy: http-only
-        DefaultCacheBehavior:
-          TargetOriginId: origin
-          DefaultTTL: 5
-          MaxTTL: 30
-          ForwardedValues:
-            QueryString: false
-          ViewerProtocolPolicy: redirect-to-https
-        ViewerCertificate:
-          AcmCertificateArn: !Ref Certificate
-          SslSupportMethod: sni-only

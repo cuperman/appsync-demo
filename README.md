@@ -44,8 +44,7 @@ aws cloudformation package \
 aws cloudformation deploy \
     --template-file ./master-template-output.yml \
     --capabilities CAPABILITY_IAM
-    --stack-name appsync-demo \
-    --parameter-overrides DomainName=appsync.cuperman.net ValidationDomainName=cuperman.net
+    --stack-name appsync-demo
 ```
 
 ### Deploy the Client App
