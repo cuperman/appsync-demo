@@ -22,7 +22,7 @@ Resources:
     Type: AWS::AppSync::ApiKey
     Properties:
       ApiId: !GetAtt GraphqlApi.ApiId
-      Expires: 1560816000
+      Expires: 1560816000 # expires June 18, 2019
   EventsDataSource:
     Type: AWS::AppSync::DataSource
     Properties:

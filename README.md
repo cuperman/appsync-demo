@@ -1,193 +1,67 @@
 # AppSync Demo
-[AWS AppSync](https://aws.amazon.com/appsync/) allows you to define a GraphQL endpoint that maps to backend datastores, like [DynamoDB](https://aws.amazon.com/dynamodb/). This fits in nicely with modern client-side applications stacks. [AWS Amplify](https://aws.github.io/aws-amplify/) provides a JavaScript interface for common client-side tasks, like authentication and secure API requests.
-This demo app uses React for views, Redux for state management, GraphQL for communication to backend, and DynamoDB as a central datastore.
 
-<img src="https://cdn.worldvectorlogo.com/logos/react.svg"
-     alt="React"
-     width="150px" />&nbsp;<img
-     src="https://cdn.worldvectorlogo.com/logos/redux.svg"
-     alt="Redux"
-     width="130px" />&nbsp;&nbsp;&nbsp;<img
-     src="https://cdn.worldvectorlogo.com/logos/graphql.svg"
-     alt="GraphQL"
-     width="110px" />&nbsp;&nbsp;&nbsp;<img
-     src="https://cdn.worldvectorlogo.com/logos/aws-dynamodb.svg"
-     alt="DynamoDB"
-     width="105px" />
+This example application demonstrates how to create a GraphQL endpoint with [AWS AppSync](https://aws.amazon.com/appsync/) that maps to your backend AWS services, like [DynamoDB](https://aws.amazon.com/dynamodb/), and uses [AWS Amplify](https://aws.github.io/aws-amplify/) in the client to securly interact with the services.
 
-## GraphQL API with AppSync
+The client application is using [React](https://reactjs.org/) for views, [Redux](https://redux.js.org/) for state management, and [Twitter Bootstrap](https://getbootstrap.com/) for styles.
 
-Create a GraphQL API using AWS AppSync.
+## Getting Started
+
+This example is based on the sample schema provided by AWS when creating an AppSync GraphQL API in the console. But it also shows how to define and provision the entire stack with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
+
+### Create a GraphQL API using sample schema
+
+AppSync has an option to use a sample schema when creating a GraphQL API.  It provides a data model of Events and Comments, and includes type defintions, queries, mutations, subscriptions, data sources (DynamoDB tables), and resolvers.
 
 1. Browse to AppSync in your AWS console
-2. Click on "Create API"
-3. Choose a name for your API and select the option "Sample schema"
-4. Press "Create"
+2. Click on “Create API”
+3. Choose a name for your API and select the option “Sample schema”
+4. Press “Create”
 
 *Note: This will deploy an API, provision DynamoDB tables, and create IAM roles on your behalf.*
 
-### GraphQL Operations
+### Run Client App Locally
 
-#### Queries
+The client app is a Javascript application that uses [NPM](https://www.npmjs.com/) and [Webpack](https://webpack.js.org/), so it is easy to install dependencies and start a local server.
 
-```graphql
-# Fetch all events
-#
-query EventConnection {
-  listEvents {
-    items {
-      id
-      name
-      where
-      when
-      description
-    }
-  }
-}
+1. Edit [config.json](./config.json) and enter the GraphQL endpoint URL and API key from the previous step
+2. Use npm to install dependencies and start the server
+  ```bash
+  npm install
+  npm start
+  ```
+3. Connect to your app at [localhost:8080](http://localhost:8080)
 
-# Fetch single event
-#
-query Event($id: ID!) {
-  getEvent(id: $id) {
-    id
-    name
-    where
-    when
-    description
-    comments {
-      items {
-        eventId
-        commentId
-        content
-        createdAt
-      }
-    }
-  }
-}
-```
+### Provision Your Own GraphQL API with CloudFormation
 
-#### Mutations
-
-```graphql
-# Create new event
-#
-mutation Event($name: String!, $where: String!, $when: String!, $description: String!) {
-  createEvent(name: $name, where: $where, when: $when, description: $description) {
-    id
-    name
-    where
-    when
-    description
-  }
-}
-
-# Comment on event
-#
-mutation Comment($eventId: ID!, $content: String!, $createdAt: String!) {
-  commentOnEvent(eventId: $eventId, content: $content, createdAt: $createdAt) {
-    eventId
-    commentId
-    content
-    createdAt
-  }
-}
-
-# deleteEvent
-#
-mutation Event($id: ID!) {
-  deleteEvent(id: $id)
-}
-```
-
-#### Subscriptions
-
-```graphql
-
-# Subscribe to comments on event
-#
-subscription Comment($eventId: String!) {
-  subscribeToEventComments(eventId: $eventId) {
-    eventId
-    commentId
-    content
-    createdAt
-  }
-}
-```
-
-## Schema Changes
-
-I made one update to the sample schema to support my example application.
-
-Add `scanIndexForward: false` to the resolver for event comments to retrieve comments in reverse order.
-
-### GraphQL Integration
-
-This is a good reference, and the examples are based on the sample schema:
-[https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
-
-In our app, all GraphQL operations are performed in the [actions](./app/actions.js). The actions are mapped to props and executed within the UI components. The actions perform the GraphQL operations asyncronously, and then dispatch the result, which is handled by the [reducer](./app/reducer.js). The reducer modifies the application state based on the response data, which triggers the components to re-render.
-
-## UI with Amplify
-
-### UI Dependencies
-
-List dependencies and why they are being used (refer to package.json)
-
-### Running the app locally
-
-Edit [config.json](./config.json) and enter the credentials of your GraphQL API.
-
-Use npm to install the dependencies and kick off any build task.
+Use aws-cli to provision the infrastructure via CloudFormation:
 
 ```bash
-npm install # install dependencies
-npm test    # run linter
-npm start   # run webpack-dev-server
-```
-
-Connect to your app at [localhost:8080](http://localhost:8080)
-
-## Provision with CloudFormation
-
-Use aws-cli to deploy the infrastructure via CloudFormation:
-
-```bash
-aws cloudformation deploy \
-    --template-file ./infrastructure/ui.yml \
-    --stack-name appsync-demo-ui \
-    --parameter-overrides DomainName=appsyncdemo.mydomain.com ValidationDomainName=mydomain.com
+aws cloudformation package \
+    --template-file ./infrastructure/master.yml \
+    --s3-bucket <TEMPLATE_BUCKET_NAME> \
+    --output-template-file master-template-output.yml
 
 aws cloudformation deploy \
-    --template-file ./infrastructure/storage.yml \
-    --stack-name appsync-demo-storage \
+    --template-file ./master-template-output.yml \
     --capabilities CAPABILITY_IAM
-
-aws cloudformation deploy \
-    --template-file ./infrastructure/api.yml \
-    --stack-name appsync-demo-api \
-    --capabilities CAPABILITY_IAM \
-    --parameter-overrides DataAccessPolicyArn=POLICY_ARN EventsTableName=TABLE_NAME CommentsTableName=TABLE_NAME
+    --stack-name appsync-demo \
+    --parameter-overrides DomainName=appsync.cuperman.net ValidationDomainName=cuperman.net
 ```
 
-Update config.json, then build & deploy the site:
+### Deploy the Client App
 
-```bash
-npm run build
-aws s3 sync ./public s3://appsync-demo-ui-sitebucket-ID/ --acl public-read
-```
+1. Edit [config.json](./config.json) and enter the GraphQL endpoint URL and API key, if you haven't done so already
+2. Use npm to build, and aws-cli to sync to S3
+  ```bash
+  npm run build
+  aws s3 sync ./public s3://<SITE_BUCKET_NAME>/ --acl public-read
+  ```
 
 ## Resources
 
 * [Introducing the AWS Amplify GraphQL Client](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
 * [Deploy an AWS AppSync GraphQL API with CloudFormation](https://read.acloud.guru/deploy-an-aws-appsync-graphql-api-with-amazon-cloudformation-9a783fdd8491)
 
-## TODO
+## More
 
-- [x] Use Amplify GraphQL Client with React/Redux
-- [x] Use subscriptions to listen for data updates
-- [x] Integration with Cognito
-- [x] Deploy with CloudFormation
-- [ ] Cognito User Pool Authorizations
-- [ ] Offline support
-- [ ] Server-side rendering
+Check out the users branch for a demonstration of authentication and authorization using [AWS Cognito](https://aws.amazon.com/cognito/).

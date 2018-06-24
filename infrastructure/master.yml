@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppSync Demo Master Stack
+Parameters:
+  DomainName:
+    Type: String
+Outputs:
+  UiStackId:
+    Value: !Ref UiStack
+  UiBucketName:
+    Value: !GetAtt UiStack.Outputs.SiteBucketId
+  UiUrl:
+    Value: !GetAtt UiStack.Outputs.SiteCloudFrontDomain
+  StorageStackId:
+    Value: !Ref StorageStack
+  ApiStackId:
+    Value: !Ref ApiStack
+  ApiUrl:
+    Value: !GetAtt ApiStack.Outputs.GraphqlApiUrl
+Resources:
+  UiStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        DomainName: !Ref DomainName
+      TemplateURL: ./ui.yml
+  StorageStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./storage.yml
+  ApiStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - StorageStack
+    Properties:
+      Parameters:
+        DataAccessPolicyArn: !GetAtt StorageStack.Outputs.DataAccessPolicyArn
+        EventsTableName: !GetAtt StorageStack.Outputs.EventsTableName
+        CommentsTableName: !GetAtt StorageStack.Outputs.CommentsTableName
+      TemplateURL: ./api.yml

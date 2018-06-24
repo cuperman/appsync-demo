@@ -3,8 +3,6 @@ Description: AppSync Demo UI
 Parameters:
   DomainName:
     Type: String
-  ValidationDomainName:
-    Type: String
 Outputs:
   CertificateId:
     Value: !Ref Certificate
@@ -29,7 +27,14 @@ Resources:
       DomainName: !Ref DomainName
       DomainValidationOptions:
         - DomainName: !Ref DomainName
-          ValidationDomain: !Ref ValidationDomainName
+          ValidationDomain: !Ref DomainName
+        # Assumption that DomainName includes a subdomain
+        # Stripping primary domain from the list and adding to validations
+        - DomainName: !Ref DomainName
+          ValidationDomain: !Join
+            - '.'
+            - - !Select [ 1, !Split ['.', !Ref DomainName ] ]
+              - !Select [ 2, !Split ['.', !Ref DomainName ] ]
       SubjectAlternativeNames:
         - !Ref DomainName
   SiteBucket:
