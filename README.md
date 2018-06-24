@@ -43,7 +43,7 @@ aws cloudformation package \
 
 aws cloudformation deploy \
     --template-file ./master-template-output.yml \
-    --capabilities CAPABILITY_IAM
+    --capabilities CAPABILITY_IAM \
     --stack-name appsync-demo
 ```
 
