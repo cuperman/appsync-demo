@@ -12,3 +12,5 @@ Resources:
       AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
+        # Hack: redirect errors to index.html to work with react-router
+        ErrorDocument: index.html
