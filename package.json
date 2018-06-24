@@ -11,7 +11,7 @@
     "stack:deploy": "aws cloudformation deploy --template-file ./template.yaml --stack-name appsync --capabilities CAPABILITY_IAM",
     "stack:describe": "aws cloudformation describe-stacks --stack-name appsync | tee ./stacks.json",
     "stack:destroy": "aws cloudformation delete-stack --stack-name appsync",
-    "start": "webpack-dev-server --progress --colors --content-base public/",
+    "start": "webpack-dev-server --mode development --progress --colors",
     "test": "npm run lint"
   },
   "author": "Jeff Cooper",
@@ -35,6 +35,8 @@
     "babel-preset-react": "^6.24.1",
     "eslint": "^4.19.1",
     "eslint-plugin-react": "^7.9.1",
+    "html-webpack-plugin": "^3.2.0",
+    "html-webpack-template": "^6.2.0",
     "redux-devtools-extension": "^2.13.2",
     "webpack": "^4.10.2",
     "webpack-cli": "^3.0.2",

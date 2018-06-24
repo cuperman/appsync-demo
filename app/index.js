@@ -7,10 +7,12 @@ import { configureStore } from './store';
 import { configureAmplify } from './amplify';
 import Layout from './components/layout';
 
-const root = document.getElementById('root');
-const store = configureStore();
 
+const store = configureStore();
 configureAmplify();
+
+const root = document.createElement('div');
+document.body.appendChild(root);
 
 ReactDom.render((
   <Provider store={store}>

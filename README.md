@@ -54,7 +54,7 @@ aws cloudformation deploy \
 2. Use npm to build, and aws-cli to sync to S3
   ```bash
   npm run build
-  aws s3 sync ./public s3://<SITE_BUCKET_NAME>/ --acl public-read
+  aws s3 sync ./dist s3://<SITE_BUCKET_NAME>/ --acl public-read
   ```
 
 ## Resources

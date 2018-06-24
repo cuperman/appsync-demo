@@ -1,3 +1,5 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const HtmlWebpackTemplate = require('html-webpack-template');
 const path = require('path');
 
 module.exports = {
@@ -6,9 +8,8 @@ module.exports = {
     app: ['./app/index.js']
   },
   output: {
-    path: path.resolve(__dirname, 'public/js'),
-    publicPath: '/js/',
-    filename: 'bundle.js'
+    publicPath: '/',
+    filename: 'js/app.bundle.js'
   },
   module: {
     rules: [
@@ -22,8 +23,19 @@ module.exports = {
       }
     ]
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      hash: true,
+      filename: 'index.html',
+      title: 'AppSync Demo',
+      inject: false,
+      template: require('html-webpack-template'),
+      links: [
+        'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css'
+      ]
+    })
+  ],
   devServer: {
     historyApiFallback: true
   }
 };
-

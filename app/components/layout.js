@@ -10,6 +10,12 @@ import Form from './form';
 import Item from './item';
 import { fetchEvents } from '../actions';
 
+const styles = {
+  main: {
+    padding: '60px 15px 0'
+  }
+};
+
 class Layout extends React.Component {
   componentDidMount() {
     this.props.fetchEvents();
@@ -21,7 +27,7 @@ class Layout extends React.Component {
         <header>
           <NavbarTop />
         </header>
-        <main>
+        <main style={styles.main}>
           <Route exact path="/" component={List} />
           <Route path="/new" component={Form} />
           <Route path="/show/:id" component={Item} />
