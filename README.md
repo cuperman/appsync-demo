@@ -44,8 +44,17 @@ aws cloudformation package \
 aws cloudformation deploy \
     --template-file './master-template-output.yml' \
     --capabilities 'CAPABILITY_IAM' \
-    --stack-name $STACK_NAME
+    --stack-name $STACK_NAME \
+    --parameter-overrides DomainName=mydomain.com
 ```
+
+Note: this creates a certificate that needs to be validated through email.  If using a subdomain, you may want the validation email sent to the root domain.  In this case, you can include `ValidationDomainName` parameter:
+
+```bash
+--parameter-overrides DomainName=mysubdomain.mydomain.com ValidationDomainName=mydomain.com
+```
+
+Another note: The CloudFormation template does not contain DNS configuration, so you'll need to manually configure your domain to route to the CloudFront domain.
 
 ### Deploy the Client App
 

@@ -1,10 +1,24 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: AppSync Demo UI
+Parameters:
+  DomainName:
+    Type: String
+  ValidationDomainName:
+    Type: String
+    Default: ''
+Conditions:
+  NoValidationDomain: !Equals [ '', !Ref ValidationDomainName ]
 Outputs:
   SiteBucketId:
     Value: !Ref SiteBucket
   SiteBucketWebsiteUrl:
     Value: !GetAtt SiteBucket.WebsiteURL
+  CertificateId:
+    Value: !Ref Certificate
+  SiteCloudFrontId:
+    Value: !Ref SiteCloudFront
+  SiteCloudFrontDomain:
+    Value: !GetAtt SiteCloudFront.DomainName
 Resources:
   SiteBucket:
     Type: AWS::S3::Bucket
@@ -14,3 +28,34 @@ Resources:
         IndexDocument: index.html
         # Hack: redirect errors to index.html to work with react-router
         ErrorDocument: index.html
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          ValidationDomain: !If [ NoValidationDomain, !Ref DomainName, !Ref ValidationDomainName ]
+      SubjectAlternativeNames:
+        - !Ref DomainName
+  SiteCloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref DomainName
+        Enabled: true
+        Origins:
+          - DomainName: !Select [ 1, !Split [ '//', !GetAtt SiteBucket.WebsiteURL ] ]
+            Id: origin
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+        DefaultCacheBehavior:
+          TargetOriginId: origin
+          DefaultTTL: 5
+          MaxTTL: 30
+          ForwardedValues:
+            QueryString: false
+          ViewerProtocolPolicy: redirect-to-https
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          SslSupportMethod: sni-only
