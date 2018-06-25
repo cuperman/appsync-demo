@@ -1,6 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackTemplate = require('html-webpack-template');
-const path = require('path');
 
 module.exports = {
   mode: 'development',
@@ -29,7 +28,7 @@ module.exports = {
       filename: 'index.html',
       title: 'AppSync Demo',
       inject: false,
-      template: require('html-webpack-template'),
+      template: HtmlWebpackTemplate,
       links: [
         'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.css'
       ]
