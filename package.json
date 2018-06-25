@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "deploy": "npm run stack:deploy && npm run stack:describe",
-    "lint": "eslint .",
+    "lint": "eslint --ext .json --ext .js .",
     "s3:sync": "aws s3 sync ./public s3://appsync.jeffws.com/ --acl public-read",
     "stack:deploy": "aws cloudformation deploy --template-file ./template.yaml --stack-name appsync --capabilities CAPABILITY_IAM",
     "stack:describe": "aws cloudformation describe-stacks --stack-name appsync | tee ./stacks.json",
@@ -34,6 +34,7 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "eslint": "^4.19.1",
+    "eslint-plugin-json": "^1.2.0",
     "eslint-plugin-react": "^7.9.1",
     "html-webpack-plugin": "^3.2.0",
     "html-webpack-template": "^6.2.0",

@@ -5,5 +5,4 @@
 node_modules/*
 
 # Ignore compiled assets
-/public/js/bundle.js
-
+/dist

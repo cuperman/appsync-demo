@@ -2,7 +2,8 @@
 
 module.exports = {
   plugins: [
-    'react'
+    'react',
+    'json'
   ],
 
   extends: [
