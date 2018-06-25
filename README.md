@@ -45,7 +45,7 @@ aws cloudformation deploy \
     --template-file './master-template-output.yml' \
     --capabilities 'CAPABILITY_IAM' \
     --stack-name $STACK_NAME \
-    --parameter-overrides DomainName=mydomain.com
+    --parameter-overrides "DomainName=$DOMAIN_NAME"
 ```
 
 Note: this creates a certificate that needs to be validated through email.  If using a subdomain, you may want the validation email sent to the root domain.  In this case, you can include `ValidationDomainName` parameter:
@@ -54,7 +54,41 @@ Note: this creates a certificate that needs to be validated through email.  If u
 --parameter-overrides DomainName=mysubdomain.mydomain.com ValidationDomainName=mydomain.com
 ```
 
-Another note: The CloudFormation template does not contain DNS configuration, so you'll need to manually configure your domain to route to the CloudFront domain.
+Another note: The CloudFormation template does not contain DNS configuration, so you\'ll need to manually configure your domain to route to the CloudFront domain.
+
+### Supplementary Configuration
+
+CloudFormation does not support all the properties for configuring Cognito as are needed for this demo, but for now, the aws cli tool can be used to automate the configuration.
+
+Run the following commands to use Cognito hosted authentication pages, and to enable OAuth for the web clients:
+
+```bash
+aws cognito-idp create-user-pool-domain \
+    --user-pool-id $USER_POOL_ID \
+    --domain $COGNITO_SUBDOMAIN
+
+aws cognito-idp update-user-pool-client \
+    --user-pool-id $USER_POOL_ID \
+    --client-id $WEB_CLIENT_DEV_ID \
+    --supported-identity-providers "COGNITO" \
+    --callback-urls "[\"http://localhost:8080\"]" \
+    --logout-urls "[\"http://localhost:8080\"]" \
+    --allowed-o-auth-flows "code" \
+    --allowed-o-auth-scopes "[\"email\", \"openid\"]" \
+    --allowed-o-auth-flows-user-pool-client
+
+aws cognito-idp update-user-pool-client \
+    --user-pool-id $USER_POOL_ID \
+    --client-id $WEB_CLIENT_PROD_ID \
+    --supported-identity-providers "COGNITO" \
+    --callback-urls "[\"$SITE_URL\"]" \
+    --logout-urls "[\"$SITE_URL\"]" \
+    --allowed-o-auth-flows "code" \
+    --allowed-o-auth-scopes "[\"email\", \"openid\"]" \
+    --allowed-o-auth-flows-user-pool-client
+```
+
+*Note: There's a bug in the cli tool that requires the URLs to be specified as JSON objects*
 
 ### Deploy the Client App
 

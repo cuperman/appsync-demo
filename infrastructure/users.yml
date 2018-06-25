@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppSync Demo Users
+Outputs:
+  UserPoolId:
+    Value: !Ref UserPool
+  WebClientDevId:
+    Value: !Ref WebClientDev
+  WebClientProdId:
+    Value: !Ref WebClientProd
+  IdentityPoolId:
+    Value: !Ref IdentityPool
+  IdentityPoolName:
+    Value: !GetAtt IdentityPool.Name
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${AWS::StackName}-UserPool'
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      Schema:
+        - Name: email
+          Required: true
+          Mutable: false
+      MfaConfiguration: 'OFF'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 6
+          RequireLowercase: false
+          RequireNumbers: false
+          RequireSymbols: false
+          RequireUppercase: false
+  WebClientDev:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - USER_PASSWORD_AUTH
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+  WebClientProd:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - USER_PASSWORD_AUTH
+      GenerateSecret: false
+      RefreshTokenValidity: 30
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: true

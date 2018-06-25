@@ -7,22 +7,21 @@ Parameters:
     Type: String
   CommentsTableName:
     Type: String
+  UserPoolId:
+    Type: String
 Outputs:
   GraphqlApiUrl:
     Value: !GetAtt GraphqlApi.GraphQLUrl
-  GraphqlApiKey:
-    Value: !GetAtt GraphqlApiKey.ApiKey
 Resources:
   GraphqlApi:
     Type: AWS::AppSync::GraphQLApi
     Properties:
       Name: !Sub ${AWS::StackName}-GraphQL
-      AuthenticationType: API_KEY
-  GraphqlApiKey:
-    Type: AWS::AppSync::ApiKey
-    Properties:
-      ApiId: !GetAtt GraphqlApi.ApiId
-      Expires: 1560816000 # expires June 18, 2019
+      AuthenticationType: AMAZON_COGNITO_USER_POOLS
+      UserPoolConfig:
+        UserPoolId: !Ref UserPoolId
+        AwsRegion: !Sub ${AWS::Region}
+        DefaultAction: ALLOW
   EventsDataSource:
     Type: AWS::AppSync::DataSource
     Properties:
