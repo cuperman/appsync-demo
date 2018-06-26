@@ -78,16 +78,20 @@ class Form extends React.Component {
 
 Form.propTypes = {
   createEvent: PropTypes.func.isRequired,
-  history: PropTypes.object.isRequired
+  history: PropTypes.object.isRequired,
+  currentUser: PropTypes.object
 };
 
 function mapStateToProps() {
   return {};
 }
 
-function mapDispatchToProps(dispatch) {
+function mapDispatchToProps(dispatch, nextProps) {
+  const { currentUser } = nextProps;
+  const username = currentUser && currentUser.username;
+
   return {
-    createEvent: (name, where, when, description) => dispatch(createEvent(name, where, when, description))
+    createEvent: (name, where, when, description) => dispatch(createEvent(name, where, when, description, username))
   };
 }
 

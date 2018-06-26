@@ -1,7 +1,12 @@
 import Amplify from 'aws-amplify';
 
-import { AppSyncConfig } from './config';
+import { CognitoConfig, AppSyncConfig } from './config';
 
 export function configureAmplify() {
-  Amplify.configure(AppSyncConfig);
+  Amplify.configure(Object.assign({},
+    {
+      Auth: CognitoConfig
+    },
+    AppSyncConfig
+  ));
 }

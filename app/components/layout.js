@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { Route } from 'react-router-dom';
+import { Auth } from 'aws-amplify';
+import { withAuthenticator } from 'aws-amplify-react';
 
 import NavbarTop from './navbar_top';
 import List from './list';
@@ -17,20 +19,47 @@ const styles = {
 };
 
 class Layout extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      currentUser: null
+    };
+
+    this.handleSignOut = this.handleSignOut.bind(this);
+  }
+
   componentDidMount() {
-    this.props.fetchEvents();
+    Auth.currentUserInfo()
+      .then(data => {
+        this.setState({
+          currentUser: data
+        });
+
+        this.props.fetchEvents();
+      });
+  }
+
+  handleSignOut(event) {
+    if (event) { event.preventDefault(); }
+    Auth.signOut();
   }
 
   render() {
+    const { handleSignOut } = this;
+    const { currentUser } = this.state;
+
     return (
       <div>
         <header>
-          <NavbarTop />
+          <NavbarTop
+            currentUser={currentUser}
+            onSignOut={handleSignOut} />
         </header>
         <main style={styles.main}>
           <Route exact path="/" component={List} />
-          <Route path="/new" component={Form} />
-          <Route path="/show/:id" component={Item} />
+          <Route path="/new" component={routeProps => <Form {...Object.assign({}, routeProps, { currentUser })} />}  />
+          <Route path="/show/:id" component={routeProps => <Item {...Object.assign({}, routeProps, { currentUser })} />} />
         </main>
       </div>
     );
@@ -51,4 +80,4 @@ function mapDispatchToProps(dispatch) {
   };
 }
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Layout));
+export default withAuthenticator(withRouter(connect(mapStateToProps, mapDispatchToProps)(Layout)));

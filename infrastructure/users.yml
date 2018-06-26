@@ -18,6 +18,8 @@ Resources:
       UserPoolName: !Sub '${AWS::StackName}-UserPool'
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
+      AutoVerifiedAttributes:
+        - email
       Schema:
         - Name: email
           Required: true
@@ -50,3 +52,70 @@ Resources:
     Type: AWS::Cognito::IdentityPool
     Properties:
       AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+        - ProviderName: !GetAtt UserPool.ProviderName
+          ClientId: !Ref WebClientDev
+        - ProviderName: !GetAtt UserPool.ProviderName
+          ClientId: !Ref WebClientProd
+  IdentityPoolRoleAuthenticated:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: CognitoAuthenticatedPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'mobileanalytics:PutEvents'
+                  - 'cognito-sync:*'
+                  - 'cognito-identity:*'
+                Resource:
+                  - '*'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: authenticated
+  IdentityPoolRoleUnauthenticated:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: CognitoUnauthenticatedPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'mobileanalytics:PutEvents'
+                  - 'cognito-sync:*'
+                Resource:
+                  - '*'
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action:
+              - sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref IdentityPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+  IdentityPoolRoles:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref IdentityPool
+      Roles:
+        authenticated: !GetAtt IdentityPoolRoleAuthenticated.Arn
+        unauthenticated: !GetAtt IdentityPoolRoleUnauthenticated.Arn

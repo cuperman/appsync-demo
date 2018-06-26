@@ -66,7 +66,7 @@ class Item extends React.Component {
     const { handleFieldChange, handleAddComment, handleMoreComments, handleEnterKey } = this;
     const { event, comments, nextToken } = this.props;
     const { comment } = this.state;
-    const { name, where, when, description } = event;
+    const { name, where, when, description, owner } = event;
 
     return (
       <div className="container">
@@ -79,6 +79,7 @@ class Item extends React.Component {
           </nav>
           <div className="pb-2 mt-4 mb-2">
             <h1>{name}</h1>
+            <small>created by {owner}</small>
           </div>
         </header>
         <main>
@@ -118,7 +119,8 @@ Item.propTypes = {
   subscribeToComments: PropTypes.func.isRequired,
   unsubscribeFromComments: PropTypes.func.isRequired,
   addComment: PropTypes.func.isRequired,
-  nextToken: PropTypes.string
+  nextToken: PropTypes.string,
+  currentUser: PropTypes.object
 };
 
 Item.defaultProps = {
@@ -142,14 +144,15 @@ function mapStateToProps(state, nextProps) {
 }
 
 function mapDispatchToProps(dispatch, nextProps) {
-  const { match } = nextProps;
+  const { match, currentUser } = nextProps;
   const eventId = match.params.id;
+  const username = currentUser && currentUser.username;
 
   return {
     fetchEventComments: (nextToken) => dispatch(fetchEventComments(eventId, nextToken)),
     subscribeToComments: () => dispatch(subscribeToEventComments(eventId)),
     unsubscribeFromComments: () => unsubscribeFromEventComments(eventId),
-    addComment: (content) => dispatch(commentOnEvent(eventId, content))
+    addComment: (content) => dispatch(commentOnEvent(eventId, content, username))
   };
 }
 

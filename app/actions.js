@@ -22,6 +22,7 @@ const FetchEvents = `query EventConnection($nextToken: String) {
       where
       when
       description
+      owner
     }
     nextToken
   }
@@ -36,6 +37,7 @@ const FetchEventComments = `query Event($id: ID!, $nextToken: String) {
         commentId
         content
         createdAt
+        user
       }
       nextToken
     }
@@ -48,25 +50,28 @@ const SubscribeToEventComments = `subscription Comment($eventId: String!) {
     commentId
     content
     createdAt
+    user
   }
 }`;
 
-const CreateEvent = `mutation Event($name: String!, $where: String!, $when: String!, $description: String!) {
-  createEvent(name: $name, where: $where, when: $when, description: $description) {
+const CreateEvent = `mutation Event($name: String!, $where: String!, $when: String!, $description: String!, $owner: String) {
+  createEvent(name: $name, where: $where, when: $when, description: $description, owner: $owner) {
     id
     name
     where
     when
     description
+    owner
   }
 }`;
 
-const CommentOnEvent = `mutation Comment($eventId: ID!, $content: String!, $createdAt: String!) {
-  commentOnEvent(eventId: $eventId, content: $content, createdAt: $createdAt) {
+const CommentOnEvent = `mutation Comment($eventId: ID!, $content: String!, $createdAt: String!, $user: String) {
+  commentOnEvent(eventId: $eventId, content: $content, createdAt: $createdAt, user: $user) {
     eventId
     commentId
     content
     createdAt
+    user
   }
 }`;
 
@@ -132,9 +137,9 @@ export function unsubscribeFromEventComments(eventId) {
   }
 }
 
-export function createEvent(name, where, when, description) {
+export function createEvent(name, where, when, description, owner) {
   return dispatch => {
-    API.graphql(graphqlOperation(CreateEvent, { name, where, when, description }))
+    API.graphql(graphqlOperation(CreateEvent, { name, where, when, description, owner }))
       .then(response => {
         dispatch({
           type: CREATE_EVENT_COMPLETE,
@@ -152,10 +157,10 @@ export function createEvent(name, where, when, description) {
   };
 }
 
-export function commentOnEvent(eventId, content) {
+export function commentOnEvent(eventId, content, user) {
   const createdAt = JSON.parse(JSON.stringify(new Date()));
   return dispatch => {
-    API.graphql(graphqlOperation(CommentOnEvent, { eventId, content, createdAt }))
+    API.graphql(graphqlOperation(CommentOnEvent, { eventId, content, createdAt, user }))
       .then(response => {
         const data = response.data;
         dispatch({

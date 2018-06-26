@@ -3,8 +3,42 @@
     "appsync": {
       "aws_appsync_graphqlEndpoint": "GRAPHQL_ENDPOINT_HERE",
       "aws_appsync_region": "us-east-1",
-      "aws_appsync_authenticationType": "API_KEY",
-      "aws_appsync_apiKey": "API_KEY_HERE"
+      "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS"
+    },
+    "cognito": {
+      "identityPoolId": "IDENTITY_POOL_ID_HERE",
+      "region": "us-east-1",
+      "userPoolId": "USER_POOL_ID_HERE",
+      "mandatorySignIn": true,
+      "oauth": {
+        "domain": "AUTH_SUBDOMAIN_HERE.auth.us-east-1.amazoncognito.com",
+        "scope": [
+          "email",
+          "openid"
+        ],
+        "responseType": "code",
+        "options": {
+          "AdvancedSecurityDataCollectionFlag": true
+        }
+      }
+    }
+  },
+  "development": {
+    "cognito": {
+      "userPoolWebClientId": "DEV_CLIENT_ID_HERE",
+      "oauth": {
+        "redirectSignIn": "http://localhost:8080",
+        "redirectSignOut": "http://localhost:8080"
+      }
+    }
+  },
+  "production": {
+    "cognito": {
+      "userPoolWebClientId": "PROD_CLIENT_ID_HERE",
+      "oauth": {
+        "redirectSignIn": "PROD_ROOT_URL_HERE",
+        "redirectSignOut": "PROD_ROOT_URL_HERE"
+      }
     }
   }
 }

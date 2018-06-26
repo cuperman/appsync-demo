@@ -9,11 +9,12 @@ class Comment extends React.Component {
 
   render() {
     const { formatDateTime } = this;
-    const { content, createdAt } = this.props;
+    const { content, createdAt, user } = this.props;
 
     return (
       <div className="card mb-2">
         <div className="card-body">
+          <h5 className="card-title">{user}</h5>
           <p className="card-text">{content}</p>
           <p className="card-text float-right">
             <small className="text-muted">{formatDateTime(createdAt)}</small>
@@ -26,7 +27,8 @@ class Comment extends React.Component {
 
 Comment.propTypes = {
   content: PropTypes.string.isRequired,
-  createdAt: PropTypes.string.isRequired
+  createdAt: PropTypes.string.isRequired,
+  user: PropTypes.string.isRequired
 };
 
 export default Comment;
