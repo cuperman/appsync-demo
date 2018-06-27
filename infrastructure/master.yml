@@ -27,8 +27,8 @@ Resources:
     DependsOn:
       - StorageStack
     Properties:
+      TemplateURL: ./api.yml
       Parameters:
         DataAccessPolicyArn: !GetAtt StorageStack.Outputs.DataAccessPolicyArn
         EventsTableName: !GetAtt StorageStack.Outputs.EventsTableName
         CommentsTableName: !GetAtt StorageStack.Outputs.CommentsTableName
-      TemplateURL: ./api.yml

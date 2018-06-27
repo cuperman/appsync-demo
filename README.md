@@ -37,23 +37,23 @@ Use aws-cli to provision the infrastructure via CloudFormation:
 
 ```bash
 aws cloudformation package \
-    --template-file ./infrastructure/master.yml \
-    --s3-bucket <TEMPLATE_BUCKET_NAME> \
-    --output-template-file master-template-output.yml
+    --template-file './infrastructure/master.yml' \
+    --s3-bucket $TEMPLATE_BUCKET_NAME \
+    --output-template-file 'master-template-output.yml'
 
 aws cloudformation deploy \
-    --template-file ./master-template-output.yml \
-    --capabilities CAPABILITY_IAM \
-    --stack-name appsync-demo
+    --template-file './master-template-output.yml' \
+    --capabilities 'CAPABILITY_IAM' \
+    --stack-name 'appsync-demo'
 ```
 
 ### Deploy the Client App
 
-1. Edit [config.json](./config.json) and enter the GraphQL endpoint URL and API key, if you haven't done so already
+1. Edit [config.json](./config.json) and enter the GraphQL endpoint URL and API key, if you haven\'t done so already
 2. Use npm to build, and aws-cli to sync to S3
   ```bash
   npm run build
-  aws s3 sync ./dist s3://<SITE_BUCKET_NAME>/ --acl public-read
+  aws s3 sync './dist' "s3://$SITE_BUCKET_NAME/" --acl 'public-read'
   ```
 
 ## Resources

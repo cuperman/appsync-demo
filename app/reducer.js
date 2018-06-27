@@ -65,7 +65,7 @@ export default function(state = initialState, action) {
     case RECEIVED_EVENT_COMMENT:
       if (find(state.comments[action.eventId].items, { commentId: action.comment.commentId })) {
         // duplicate detected; ignore
-        return;
+        return state;
       }
       return assign({}, state, {
         comments: assign({}, state.comments, {
