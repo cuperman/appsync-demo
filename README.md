@@ -44,7 +44,7 @@ aws cloudformation package \
 aws cloudformation deploy \
     --template-file './master-template-output.yml' \
     --capabilities 'CAPABILITY_IAM' \
-    --stack-name 'appsync-demo'
+    --stack-name $STACK_NAME
 ```
 
 ### Deploy the Client App
