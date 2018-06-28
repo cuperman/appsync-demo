@@ -60,6 +60,7 @@ aws cloudformation deploy \
 
 * [Introducing the AWS Amplify GraphQL Client](https://hackernoon.com/introducing-the-aws-amplify-graphql-client-8a1a1e514fde)
 * [Deploy an AWS AppSync GraphQL API with CloudFormation](https://read.acloud.guru/deploy-an-aws-appsync-graphql-api-with-amazon-cloudformation-9a783fdd8491)
+* [How developers can authenticate and authorize users with AWS AppSync](https://read.acloud.guru/authentication-and-authorization-with-aws-appsync-ccbd77658de2)
 
 ## More
 
